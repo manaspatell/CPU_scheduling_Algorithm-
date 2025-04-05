@@ -206,6 +206,7 @@
             background: rgba(255, 255, 255, 0.05);
             border-radius: 10px;
             transition: all 0.3s ease;
+            cursor: pointer; /* Change cursor to pointer */
         }
 
         .contributor:hover {
@@ -272,6 +273,11 @@
             color: red;
             text-align: center;
             margin-top: 10px;
+        }
+
+        .contributor-details {
+            margin-top: 20px;
+            color: var(--text-color);
         }
     </style>
 </head>
@@ -721,18 +727,21 @@ int main() {
         <section id="made_by" class="section-container">
             <h2 class="section-title">Project Contributors</h2>
             <div class="contributors">
-                <div class="contributor">
+                <div class="contributor" onclick="showContributorDetails('Manas Patel')">
                     <h3>Manas Patel</h3>
                     <p>Lead Developer</p>
                 </div>
-                <div class="contributor">
+                <div class="contributor" onclick="showContributorDetails('Nancy Kumari')">
                     <h3>Nancy Kumari</h3>
                     <p>Developer</p>
                 </div>
-                <div class="contributor">
+                <div class="contributor" onclick="showContributorDetails('Ayush Bharti')">
                     <h3>Ayush Bharti</h3>
                     <p>Developer</p>
                 </div>
+            </div>
+            <div id="contributorDetails" class="contributor-details">
+                Click on a contributor's name to see their details.
             </div>
         </section>
     </div>
@@ -765,6 +774,27 @@ int main() {
             // Add active class to selected section and nav link
             document.getElementById(sectionId).classList.add('active');
             event.target.classList.add('active');
+        }
+
+        function showContributorDetails(name) {
+            let details = '';
+
+            switch(name) {
+                case 'Manas Patel':
+                    details = 'Lead Developer: Responsible for Making The Algorithm and the overall architecture and implementation of the CPU scheduling algorithm.';
+                    break;
+                case 'Nancy Kumari':
+                    details = 'Developer: Help in Research Part and Helps in to Create online Simulator.';
+                    break;
+                case 'Ayush Bharti':
+                    details = 'Developer: Make Report and Helps to check errors and helps in Research Part';
+                    break;
+                default:
+                    details = 'No details available.';
+            }
+            
+            // Display the details in a designated area
+            document.getElementById('contributorDetails').innerText = details;
         }
     </script>
 </body>
