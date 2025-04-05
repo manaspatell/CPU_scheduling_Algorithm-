@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Energy-Efficient CPU Scheduling Algorithm</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #0d243a; /* Dark blue primary color */
+            --secondary-color: #11181f; /* Darker blue secondary color */
+            --accent-color: #ffffff; /* Orange accent color */
+            --text-color: #ffffff; /* White text for contrast */
+            --card-background: rgba(255, 255, 255, 0.1); /* Slightly more opaque card background */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Poppins', sans-serif;
+            background: #000000; /* Dark background */
+            min-height: 100vh;
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        /* Loading Screen Styles */
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #2c3e50, #34495e); /* Gradient background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+
+        .loader {
+            border: 8px solid rgba(255, 255, 255, 0.3);
+            border-top: 8px solid var(--accent-color); /* Orange spinner */
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .global-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+
+        header {
+            background: var(--primary-color);
+            padding: 20px 0;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .header-content i {
+            font-size: 3rem;
+            color: var(--accent-color);
+            transition: transform 0.3s ease;
+        }
+
+        .header-content i:hover {
+            transform: scale(1.1);
+        }
+
+        .header-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 3px 3px 15px rgba(0, 0, 0, 0.7);
+        }
+
+        nav {
+            background: var(--secondary-color);
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .nav-link {
+            color: var(--text-color);
+            text-decoration: none;
+            font-size: 1.2rem;
+            font-weight: 600;
+            position: relative;
+            transition: all 0.3s ease;
+            padding: 10px 20px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(1.05);
+        }
+
+        .nav-link i {
+            color: var(--accent-color);
+            transition: color 0.3s ease;
+        }
+
+        .nav-link:hover i {
+            color: #0069d9;
+        }
+
+        .section-container {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+            background: var(--card-background);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .section-container.active {
+            display: block;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            color: var(--text-color);
+            position: relative;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 3px;
+            background: var(--text-color);
+        }
+
+        .screenshot-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .screenshot-item {
+            overflow: hidden;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .screenshot-item:hover {
+            transform: scale(1.05);
+        }
+
+        .screenshot-item img {
+            width: 100%;
+            height: auto;
+            object-fit: cover;
+        }
+
+        .contributors {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .contributor {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .contributor:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        footer {
+            background: var(--primary-color);
+            text-align: center;
+            padding: 20px 0;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+            .nav-container {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .header-title {
+                font-size: 1.5rem;
+            }
+
+            .section-container {
+                padding: 15px;
+            }
+        }
+
+        /* New CSS for code section */
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow: auto;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Table styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #fff;
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: var(--primary-color);
+        }
+
+        .error {
+            color: red;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <div class="loader"></div>
+    </div>
+
+    <header>
+        <div class="global-container header-content">
+            <i class="fas fa-cogs"></i> <!-- Changed icon to a gear for a tech feel -->
+            <h1 class="header-title">Energy-Efficient CPU Scheduling Algorithm</h1>
+        </div>
+    </header>
+
+    <nav>
+        <div class="global-container nav-container">
+            <a href="#" class="nav-link active" onclick="showSection('home')">
+                <i class="fas fa-home"></i> Home
+            </a>
+            <a href="#" class="nav-link" onclick="showSection('about')">
+                <i class="fas fa-info-circle"></i> About
+            </a>
+            <a href="#" class="nav-link" onclick="showSection('code')">
+                <i class="fas fa-code"></i> Code
+            </a>
+            <a href="#" class="nav-link" onclick="showSection('compiler')">
+                <i class="fas fa-laptop-code"></i> Compiler
+            </a>
+            <a href="#" class="nav-link" onclick="showSection('screenshots')">
+                <i class="fas fa-image"></i> Screenshots
+            </a>
+            <a href="#" class="nav-link" onclick="showSection('made_by')">
+                <i class="fas fa-users"></i> Contributors
+            </a>
+        </div>
+    </nav>
+
+    <div class="global-container">
+        <section id="home" class="section-container active">
+            <h2 class="section-title">Welcome to Energy-Efficient CPU Scheduling Algorithm</h2>
+            <p>Description: Develop a CPU scheduling algorithm that minimizes energy consumption without compromising performance. The algorithm should be suitable for mobile and embedded systems where power efficiency is critical.</p>
+        </section>
+
+        <section id="about" class="section-container">
+            <h2 class="section-title">About Energy Efficient CPU Scheduling</h2>
+            <h4 class="section-title">Definition</h4>
+            <p>An E-E Scheduling Algorithm is a scheduling strategy that tries to maximize energy efficiency and minimize the energy cost of processing the data. The approach uses the DVFS techniques which vary the voltage and frequency of a system component. When combined with scheduling policies like Shortest Job First, Round Robin, or Priority Scheduling, power constraints can be met without sacrificing performance which results in less energy being consumed. This makes it useful for mobile phones, embedded systems, and any other low power devices.</p>
+            <h2 class="section-title">Advantages of Energy Efficient CPU Scheduling</h2>
+            <p>1. Reduced Power Consumption: Minimizes energy usage by dynamically adjusting CPU resources, lowering overall power costs.</p>
+            <p>2. Extended Battery Life: Enhances battery performance in mobile and embedded devices by optimizing energy use.</p>
+            <p>3. Lower Heat Generation: Reduces CPU temperature, preventing thermal hotspots and lowering cooling requirements.</p>
+            <p>4. Improved System Reliability: Prevents overheating, which extends hardware lifespan and reduces failure rates.</p>
+            <p>5. Optimized Performance: Balances energy efficiency with task execution to maintain system responsiveness.</p>
+            <p>6. Environmental Benefits: Lowers carbon footprint by reducing energy wastage in large-scale computing environments.</p>
+            <p>7. Cost Savings: Decreases electricity bills in data centers and cloud computing systems by minimizing energy-intensive operations.</p>
+            <p>8. Better Resource Utilization: Efficiently manages CPU cores, reducing idle power consumption while maintaining workload efficiency.</p>
+            <p>9. Scalability: Adapts to various system architectures, from embedded processors to large multi-core servers.</p>
+            <p>10. Supports Green Computing: Contributes to sustainable computing by promoting energy-conscious resource allocation strategies.</p>
+            <h2 class="section-title">Disadvantages of Energy Efficient CPU Scheduling</h2>
+            <p>1. Increased Scheduling Complexity: Implementing energy-aware scheduling requires sophisticated algorithms, making the system more complex.</p>
+            <p>2. Performance Trade-offs: Reducing power consumption may lead to lower processing speeds, increasing execution time for tasks.</p>
+            <p>3. Overhead in Dynamic Adjustments: Techniques like DVFS and DPM introduce overhead due to frequent changes in CPU frequency and power states.</p>
+            <p>4. Compatibility Issues: Some energy-efficient scheduling techniques may not be fully supported by all hardware and operating systems.</p>
+            <p>5. Unpredictable Execution Time: Adapting to energy constraints can make task execution times less predictable, which is problematic for real-time applications.</p>
+            <p>6. Risk of Thermal Imbalance: Poor scheduling decisions can lead to thermal hotspots, potentially reducing system efficiency.</p>
+            <p>7. Resource Starvation: Tasks with lower energy demands may be favored over high-energy tasks, leading to unfair CPU allocation.</p>
+            <p>8. Initial Implementation Cost: Integrating energy-efficient scheduling into existing systems may require additional hardware or software modifications.</p>
+            <p>9. Limited Benefit in Low-Load Scenarios: Energy savings are more significant in high-load situations; under low utilization, the impact may be minimal.</p>
+            <p>10. Complex Monitoring and Management: Requires continuous monitoring of energy usage, workload distribution, and performance to ensure efficiency.</p>
+           
+            <h4 class="section-title">Types of Energy Efficient CPU Scheduling Algorithm</h4>
+            <p>1. Dynamic Voltage and Frequency Scaling (DVFS) Scheduling.</p>
+            <p>2. Dynamic Power Management (DPM) Scheduling.</p>
+            <p>3. Thermal-Aware Scheduling.</p>
+            <p>4. Deadline-Aware Energy Scheduling.</p>
+            <p>5. Task Consolidation Scheduling.</p>
+            <p>6. Energy-Aware Fair Scheduling.</p>
+            <p>7. Machine Learning-Based Energy Scheduling.</p>
+            <h4 class="section-title">1. DVFS</h4>
+            <p>Dynamic Voltage and Frequency Scaling (DVFS) is a power management technique that adjusts a processor’s clock frequency and operating voltage dynamically based on workload demands to optimize energy efficiency. By lowering the frequency and voltage during low computational loads, DVFS reduces power consumption and heat generation, extending battery life in mobile devices and improving thermal management in high-performance computing systems. Conversely, when higher performance is required, the frequency and voltage are increased to maintain processing speed. Since power consumption is proportional to the square of the voltage (P ∝ V²f), DVFS significantly reduces energy usage while balancing performance needs. It is widely used in embedded systems, cloud computing, and real-time applications, where energy efficiency and performance trade-offs are crucial.</p>
+            <h4 class="section-title">2. DPM</h4>
+            <p>Dynamic Power Management (DPM) is an energy-saving technique that optimizes power consumption by selectively turning off or reducing the power state of system components when they are idle or underutilized. Unlike Dynamic Voltage and Frequency Scaling (DVFS), which adjusts CPU voltage and frequency, DPM focuses on switching components between different power states, such as sleep, standby, or active modes, based on workload requirements. It is widely used in battery-operated devices, data centers, and embedded systems to extend battery life and reduce overall energy consumption. DPM is implemented using hardware-based power gating, software-controlled sleep states, and adaptive scheduling policies that predict idle periods and manage power transitions efficiently.</p>
+            <h4 class="section-title">3. Thermal-Aware Scheduling</h4>
+            <p>Thermal-Aware Scheduling is a CPU scheduling technique that manages workload distribution to prevent overheating and reduce energy consumption. Instead of solely focusing on performance, this approach considers temperature constraints and dynamically adjusts task execution across CPU cores to balance thermal output. It helps in avoiding thermal hotspots, which can degrade hardware reliability and increase cooling costs, especially in high-performance computing systems, data centers, and embedded devices. Techniques such as task migration, dynamic voltage and frequency scaling (DVFS), and workload throttling are commonly used to maintain an optimal thermal profile. By effectively distributing heat generation, thermal-aware scheduling enhances system stability, prolongs hardware lifespan, and minimizes the need for aggressive cooling mechanisms.</p>
+            <h4 class="section-title">4. Deadline-Aware Energy Scheduling</h4>
+            <p>Deadline-Aware Energy Scheduling is a power management technique that balances energy efficiency and task deadlines by dynamically adjusting CPU performance based on workload urgency. It ensures that tasks meet their deadlines while minimizing energy consumption using methods like Dynamic Voltage and Frequency Scaling (DVFS), Dynamic Power Management (DPM), and task scheduling strategies. This approach is particularly useful in real-time systems, embedded devices, and cloud computing, where energy efficiency is crucial but missing deadlines can lead to system failures. By prioritizing tasks with stricter deadlines and scaling CPU resources accordingly, deadline-aware scheduling optimizes power usage without compromising system responsiveness or reliability.</p>
+            <h4 class="section-title">5. Task Consolidation Scheduling</h4>
+            <p>Task Consolidation Scheduling is an energy-efficient scheduling technique that reduces power consumption by grouping tasks onto a minimal number of active processing units while turning off or putting idle cores into low-power states. This approach is widely used in multi-core processors, cloud computing, and data centers, where reducing the number of active cores can significantly lower energy usage. By consolidating tasks efficiently, it minimizes unnecessary power wastage while ensuring workload balance and system performance. Techniques such as Dynamic Voltage and Frequency Scaling (DVFS), workload migration, and heuristic-based scheduling are often combined with task consolidation to achieve optimal energy savings. However, improper consolidation can lead to thermal hotspots and performance bottlenecks, making intelligent task placement crucial for maintaining system efficiency.</p>
+            <h4 class="section-title">6. Energy-Aware Fair Scheduling</h4>
+            <p>Energy-Aware Fair Scheduling is a CPU scheduling technique that balances energy efficiency and fair resource allocation among processes. It ensures that each task gets a fair share of CPU time while dynamically adjusting power consumption using techniques like Dynamic Voltage and Frequency Scaling (DVFS), workload balancing, and power-aware task prioritization. This approach is particularly useful in multi-core systems, cloud computing, and real-time environments, where both performance and energy conservation are critical. By considering factors like task priority, execution deadlines, and energy budgets, Energy-Aware Fair Scheduling optimizes power usage while preventing resource starvation. It helps in extending battery life, reducing thermal stress, and improving overall system efficiency without disproportionately favoring high-priority or energy-intensive tasks.</p>
+            <h4 class="section-title">7. Machine Learning-Based Energy Scheduling</h4>
+            <p>Machine Learning-Based Energy Scheduling is an advanced approach that leverages machine learning algorithms to optimize CPU scheduling for energy efficiency and performance. Unlike traditional methods, this approach predicts workload patterns, CPU utilization, and power consumption trends to make intelligent scheduling decisions. Techniques such as reinforcement learning, neural networks, and decision trees are commonly used to dynamically adjust CPU frequency, voltage, and task allocation. It is widely applied in data centers, mobile devices, and cloud computing environments, where reducing power consumption without compromising performance is critical. By continuously learning from past executions and adapting to real-time system conditions, machine learning-based scheduling enhances energy savings, prolongs battery life, and improves overall system efficiency while ensuring tasks meet their deadlines.</p>
+            <h4 class="section-title">Comparison Between Energy-Efficient CPU Scheduling and Normal CPU Scheduling</h4>
+            <img src="image.png" alt="comparision">
+        </section>
+
+        <section id="code" class="section-container">
+            <h2 class="section-title">Implementation</h2>
+            <p>Comprehensive C implementation of Dynamic Voltage and Frequency Scaling (DVFS) CPU Scheduling using Shortest Remaining Time First (SRTF) to optimize both energy efficiency and performance.</p>
+            <pre><code>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;math.h&gt;
+
+#define MAX_PROCESSES 10
+
+// Frequency and voltage levels (simulated values)
+float frequencies[] = {1.0, 1.5, 2.0, 2.5}; // GHz
+float voltages[] = {0.9, 1.0, 1.1, 1.2};   // Volts
+int num_levels = 4;
+
+typedef struct {
+    int pid;
+    int arrival_time;
+    int burst_time;
+    int remaining_time;
+    int completion_time;
+    int waiting_time;
+    int turnaround_time;
+    float energy_consumed;
+    float frequency;
+    float voltage;
+} Process;
+
+void swap(Process *a, Process *b) {
+    Process temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+void sort_by_arrival(Process processes[], int n) {
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = 0; j < n - i - 1; j++) {
+            if (processes[j].arrival_time > processes[j + 1].arrival_time) {
+                swap(&processes[j], &processes[j + 1]);
+            }
+        }
+    }
+}
+
+// Select frequency & voltage level based on remaining workload and burst characteristics
+void adjust_dvfs(Process *p) {
+    int level = 0;
+    if (p->remaining_time > 8) level = 3;
+    else if (p->remaining_time > 5) level = 2;
+    else if (p->remaining_time > 2) level = 1;
+    p->frequency = frequencies[level];
+    p->voltage = voltages[level];
+}
+
+void dvfs_scheduling(Process processes[], int n) {
+    int time = 0, completed = 0;
+    
+    while (completed < n) {
+        int min_index = -1;
+        int min_burst = __INT_MAX__;
+        
+        for (int i = 0; i < n; i++) {
+            if (processes[i].arrival_time <= time && processes[i].remaining_time > 0) {
+                if (processes[i].remaining_time < min_burst) {
+                    min_burst = processes[i].remaining_time;
+                    min_index = i;
+                }
+            }
+        }
+        
+        if (min_index == -1) {
+            // If no process is available, move time to the next arrival time
+            int next_arrival = __INT_MAX__;
+            for (int i = 0; i < n; i++) {
+                if (processes[i].remaining_time > 0 && processes[i].arrival_time > time) {
+                    next_arrival = (processes[i].arrival_time < next_arrival) ? processes[i].arrival_time : next_arrival;
+                }
+            }
+            time = next_arrival;
+            continue;
+        }
+        
+        adjust_dvfs(&processes[min_index]);
+        int exec_time = processes[min_index].remaining_time;
+        processes[min_index].remaining_time = 0;
+        time += exec_time;
+        processes[min_index].completion_time = time;
+        processes[min_index].turnaround_time = processes[min_index].completion_time - processes[min_index].arrival_time;
+        processes[min_index].waiting_time = processes[min_index].turnaround_time - processes[min_index].burst_time;
+        processes[min_index].energy_consumed = pow(processes[min_index].voltage, 2) * exec_time; // Power ~ V^2 * t
+        completed++;
+    }
+}
+
+void display_metrics(Process processes[], int n) {
+    printf("\nPID\tAT\tBT\tCT\tTAT\tWT\tFreq(GHz)\tVolt(V)\tEnergy\n");
+    for (int i = 0; i < n; i++) {
+        printf("%d\t%d\t%d\t%d\t%d\t%d\t%.1f\t\t%.1f\t\t%.2f\n", processes[i].pid, processes[i].arrival_time, processes[i].burst_time,
+               processes[i].completion_time, processes[i].turnaround_time, processes[i].waiting_time,
+               processes[i].frequency, processes[i].voltage, processes[i].energy_consumed);
+    }
+}
+
+int main() {
+    int n;
+    Process processes[MAX_PROCESSES];
+    
+    printf("Enter number of processes: ");
+    scanf("%d", &n);
+    
+    printf("Enter Arrival Time and Burst Time for each process:\n");
+    for (int i = 0; i < n; i++) {
+        processes[i].pid = i + 1;
+        printf("Process %d: ", i + 1);
+        scanf("%d %d", &processes[i].arrival_time, &processes[i].burst_time);
+        processes[i].remaining_time = processes[i].burst_time;
+    }
+    
+    sort_by_arrival(processes, n);
+    dvfs_scheduling(processes, n);
+    display_metrics(processes, n);
+    
+    return 0;
+}
+//Developed By - Manas Patel//
+</code></pre>
+<h2 class="section-title">The Algorithm We Have Develop</h2>
+<pre><code>
+    This algorithm uses a Dynamic Voltage and Frequency Scaling (DVFS) based Shortest Remaining Time First (SRTF) scheduling to maximize the energy saving while maintaining effective CPU scheduling. The technique utilized here is a preemptive scheduling scheme in which the process with the smallest remaining burst time is always chosen for execution. Besides, DVFS is incorporated by dynamically varying the CPU frequency and voltage based on the remaining process execution time.
+</code></pre>
+
+            </code></pre>
+            <h2 class="section-title">Working Of Algorithm</h2>
+            <pre><code>
+                The algorithm starts with sorting processes by their arrival times so that they are scheduled in the proper order. It proceeds with a Shortest Remaining Time First (SRTF) scheduling policy, where the process with the smallest remaining execution time is chosen at every step. Prior to executing a process, the algorithm uses Dynamic Voltage and Frequency Scaling (DVFS) to optimize energy consumption by changing the CPU frequency and voltage. Increased workloads demand quicker processing and hence run at increased frequencies and voltage, whereas lower workloads utilize lesser frequency and voltage in order to save power. The power utilization is determined by the formula Energy = V² × Time, where power usage is directly proportional to the square of voltage. Decreasing voltage minimizes overall energy consumption significantly. After a process finishes, important performance parameters like turnaround time, waiting time, and completion time are measured to measure scheduling effectiveness.
+            </code></pre>
+
+            <h2 class="section-title">Benefits of This Algorithm</h2>
+<pre><code>
+    1. Energy Efficiency: Dynamically reducing voltage and frequency, the algorithm reduces power consumption without considerable performance loss.
+
+    2. Improved Performance: The SRTF policy guarantees shorter tasks are executed in a timely manner, minimizing total waiting time.
+    
+    3. Suitable for Mobile and Embedded Systems: This approach is especially beneficial for battery-powered devices where energy efficiency is essential.
+    
+    4. CPU Utilization Optimized: Guarantees efficient use of CPU resources without wasted idle time.
+    
+    This method is greatly advantageous in real-time and embedded systems where performance and energy efficiency are very important considerations.
+</code></pre>
+
+<h2 class="section-title">Why Our Algorithm Is Unique??</h2>
+<pre><code>
+    1. Rather than employing fixed scheduling, this method adjusts CPU voltage and frequency levels dynamically in accordance with the remaining execution time.
+
+    2. It embeds energy optimization as part of the scheduling process, while existing DVFS methods tend to be used independently of scheduling.
+    
+    3. It is less complex than most current energy-efficient schedulers and hence easier to integrate into operating systems for resource-limited environments (e.g., mobile devices).
+</code></pre>
+        </section>
+
+        <section id="compiler" class="section-container">
+            <h2 class="section-title">DVFS Scheduling Simulator</h2>
+            <div class="container">
+                <h2>DVFS Scheduling Simulator</h2>
+                
+                <div class="input-section">
+                    <label for="numProcesses">Number of processes:</label>
+                    <input type="number" id="numProcesses" min="1" max="10" value="3">
+                    <button onclick="generateProcessInputs()">Set</button>
+                </div>
+                
+                <div id="processInputs" class="process-inputs"></div>
+                
+                <button onclick="runSimulation()">Run Simulation</button>
+                
+                <div class="output-section">
+                    <h3>Output:</h3>
+                    <div id="output">
+                        <table id="resultsTable" style="display: none;">
+                            <thead>
+                                <tr>
+                                    <th>PID</th>
+                                    <th>AT</th>
+                                    <th>BT</th>
+                                    <th>CT</th>
+                                    <th>TAT</th>
+                                    <th>WT</th>
+                                    <th>Freq (GHz)</th>
+                                    <th>Volt (V)</th>
+                                    <th>Energy (J)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="resultsBody"></tbody>
+                        </table>
+                        <div id="errorMessage" class="error"></div>
+                    </div>
+                </div>
+            </div>
+
+            <script>
+                const frequencies = [1.0, 1.5, 2.0, 2.5]; // GHz
+                const voltages = [0.9, 1.0, 1.1, 1.2];   // Volts
+                
+                function generateProcessInputs() {
+                    const numProcesses = parseInt(document.getElementById('numProcesses').value);
+                    const container = document.getElementById('processInputs');
+                    container.innerHTML = '';
+                    
+                    for (let i = 0; i < numProcesses; i++) {
+                        const div = document.createElement('div');
+                        div.className = 'input-section';
+                        div.innerHTML = `
+                            <label>Process ${i + 1}:</label>
+                            <input type="number" id="arrival${i}" placeholder="Arrival Time" min="0" value="${i}">
+                            <input type="number" id="burst${i}" placeholder="Burst Time" min="1" value="${Math.floor(Math.random() * 10) + 1}">
+                        `;
+                        container.appendChild(div);
+                    }
+                }
+                
+                function runSimulation() {
+                    const numProcesses = parseInt(document.getElementById('numProcesses').value);
+                    const processes = [];
+                    let errorMessage = '';
+
+                    for (let i = 0; i < numProcesses; i++) {
+                        const arrivalTime = parseInt(document.getElementById(`arrival${i}`).value);
+                        const burstTime = parseInt(document.getElementById(`burst${i}`).value);
+                        
+                        if (arrivalTime < 0 || burstTime < 1) {
+                            errorMessage = 'Please enter valid arrival and burst times.';
+                            break;
+                        }
+
+                        processes.push({
+                            pid: i + 1,
+                            arrival_time: arrivalTime,
+                            burst_time: burstTime,
+                            remaining_time: burstTime,
+                            completion_time: 0,
+                            waiting_time: 0,
+                            turnaround_time: 0,
+                            energy_consumed: 0,
+                            frequency: 0,
+                            voltage: 0
+                        });
+                    }
+
+                    if (errorMessage) {
+                        document.getElementById('errorMessage').innerText = errorMessage;
+                        return;
+                    } else {
+                        document.getElementById('errorMessage').innerText = '';
+                    }
+                    
+                    processes.sort((a, b) => a.arrival_time - b.arrival_time);
+                    dvfs_scheduling(processes, numProcesses);
+                    displayResults(processes);
+                }
+                
+                function adjust_dvfs(p) {
+                    let level = 0;
+                    if (p.remaining_time > 8) level = 3;
+                    else if (p.remaining_time > 5) level = 2;
+                    else if (p.remaining_time > 2) level = 1;
+                    p.frequency = frequencies[level];
+                    p.voltage = voltages[level];
+                }
+                
+                function dvfs_scheduling(processes, n) {
+                    let time = 0;
+                    let completed = 0;
+                    
+                    while (completed < n) {
+                        let min_index = -1;
+                        let min_burst = Number.MAX_SAFE_INTEGER;
+                        
+                        for (let i = 0; i < n; i++) {
+                            if (processes[i].arrival_time <= time && processes[i].remaining_time > 0) {
+                                if (processes[i].remaining_time < min_burst) {
+                                    min_burst = processes[i].remaining_time;
+                                    min_index = i;
+                                }
+                            }
+                        }
+                        
+                        if (min_index === -1) {
+                            let next_arrival = Number.MAX_SAFE_INTEGER;
+                            for (let i = 0; i < n; i++) {
+                                if (processes[i].remaining_time > 0 && processes[i].arrival_time > time) {
+                                    next_arrival = Math.min(processes[i].arrival_time, next_arrival);
+                                }
+                            }
+                            time = next_arrival;
+                            continue;
+                        }
+                        
+                        adjust_dvfs(processes[min_index]);
+                        const exec_time = processes[min_index].remaining_time;
+                        processes[min_index].remaining_time = 0;
+                        time += exec_time;
+                        processes[min_index].completion_time = time;
+                        processes[min_index].turnaround_time = processes[min_index].completion_time - processes[min_index].arrival_time;
+                        processes[min_index].waiting_time = processes[min_index].turnaround_time - processes[min_index].burst_time;
+                        processes[min_index].energy_consumed = Math.pow(processes[min_index].voltage, 2) * exec_time;
+                        completed++;
+                    }
+                }
+                
+                function displayResults(processes) {
+                    const table = document.getElementById('resultsTable');
+                    const tbody = document.getElementById('resultsBody');
+                    tbody.innerHTML = '';
+                    
+                    for (const p of processes) {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${p.pid}</td>
+                            <td>${p.arrival_time}</td>
+                            <td>${p.burst_time}</td>
+                            <td>${p.completion_time}</td>
+                            <td>${p.turnaround_time}</td>
+                            <td>${p.waiting_time}</td>
+                            <td>${p.frequency.toFixed(1)}</td>
+                            <td>${p.voltage.toFixed(1)}</td>
+                            <td>${p.energy_consumed.toFixed(2)}</td>
+                        `;
+                        tbody.appendChild(row);
+                    }
+                    
+                    table.style.display = 'table';
+                }
+                
+                generateProcessInputs();
+            </script>
+        </section>
+
+        <section id="screenshots" class="section-container">
+            <h2 class="section-title">Code Outputs</h2>
+            <div class="screenshot-gallery">
+                <div class="screenshot-item">
+                    <img src="./image1.png" alt="Screenshot 1">
+                </div>
+                <div class="screenshot-item">
+                    <img src="./image2.png" alt="Screenshot 2">
+                </div>
+            </div>
+        </section>
+
+        <section id="made_by" class="section-container">
+            <h2 class="section-title">Project Contributors</h2>
+            <div class="contributors">
+                <div class="contributor">
+                    <h3>Manas Patel</h3>
+                    <p>Lead Developer</p>
+                </div>
+                <div class="contributor">
+                    <h3>Nancy Kumari</h3>
+                    <p>Developer</p>
+                </div>
+                <div class="contributor">
+                    <h3>Ayush Bharti</h3>
+                    <p>Developer</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 CPU Scheduling Project | BY- Manas Patel, Nancy Kumari, Ayush Bharti</p>
+    </footer>
+
+    <script>
+        // Simulate loading time
+        window.onload = function() {
+            setTimeout(function() {
+                document.getElementById('loading').style.opacity = '0';
+                setTimeout(function() {
+                    document.getElementById('loading').style.display = 'none';
+                    document.body.style.overflow = 'auto'; // Allow scrolling after loading
+                }, 500);
+            }, 2000); // Adjust loading time as needed
+        };
+
+        function showSection(sectionId) {
+            // Remove active class from all sections and nav links
+            document.querySelectorAll('.section-container').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+
+            // Add active class to selected section and nav link
+            document.getElementById(sectionId).classList.add('active');
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>
